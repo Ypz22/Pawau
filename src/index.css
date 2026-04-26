@@ -1,0 +1,33 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-primary: #FF5B1A;
+  --color-brand-cream: #FFF3E6;
+  --color-brand-blue: #4BC8E8;
+  --color-brand-charcoal: #2D2926;
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+}
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-brand-cream text-brand-charcoal font-sans antialiased;
+    margin: 0;
+    min-width: 320px;
+  }
+
+  #root {
+    min-height: 100vh;
+  }
+}
