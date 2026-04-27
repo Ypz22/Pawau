@@ -48,6 +48,59 @@ function SelectField({
   );
 }
 
+function PetTypeSelector({
+  value,
+  onChange,
+  error,
+}: {
+  value: BookingFormState['petType'];
+  onChange: (value: NonNullable<BookingFormState['petType']>) => void;
+  error?: string;
+}) {
+  const options = [
+    { value: 'perro', label: 'Perro', icon: 'pets' },
+    { value: 'gato', label: 'Gato', icon: 'pets' },
+    { value: 'otro', label: 'Otro', icon: 'favorite' },
+  ] as const;
+
+  return (
+    <div className="flex flex-col gap-2">
+      <label className="ml-1 text-sm font-bold uppercase tracking-[0.05em] text-on-surface-variant">Tipo de mascota</label>
+      <div className="grid grid-cols-3 gap-3">
+        {options.map((option) => {
+          const isActive = value === option.value;
+
+          return (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() => onChange(option.value)}
+              aria-pressed={isActive}
+              className={`flex min-h-[132px] flex-col items-center justify-center gap-3 rounded-[1.5rem] border px-3 py-4 text-center transition-all ${
+                isActive
+                  ? 'border-primary-container bg-[#FFF1ED] shadow-[0_10px_24px_rgba(255,91,26,0.12)]'
+                  : 'border-outline-variant bg-background hover:-translate-y-0.5 hover:border-primary-container/60 hover:bg-surface-container-low'
+              } ${error ? 'border-red-300' : ''}`}
+            >
+              <div
+                className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-full ${
+                  isActive ? 'bg-[#FF5B1A] text-white shadow-[0_10px_20px_rgba(255,91,26,0.2)]' : 'bg-surface-container text-primary-container'
+                }`}
+              >
+                <span className="material-symbols-outlined text-[30px]" style={{ fontVariationSettings: "'FILL' 1" }}>
+                  {option.icon}
+                </span>
+              </div>
+              <p className="text-base font-bold leading-none text-on-surface">{option.label}</p>
+            </button>
+          );
+        })}
+      </div>
+      {error && <span className="text-xs font-bold text-red-500">{error}</span>}
+    </div>
+  );
+}
+
 export default function Booking() {
   const bookingSideImage = 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT1nCWLlQAgdwyJL1SJDBYfCrZUlyA7uS9hnQ&s'; // PON_AQUI_LA_RUTA_DE_LA_IMAGEN_PARA_LA_PAGINA_DE_RESERVAS
 
@@ -273,16 +326,10 @@ export default function Booking() {
               </div>
 
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                <SelectField
-                  label="Tipo de mascota"
+                <PetTypeSelector
                   value={form.petType}
                   onChange={(value) => updateField('petType', value as BookingFormState['petType'])}
                   error={errors.petType}
-                  options={[
-                    { value: 'perro', label: 'Perro' },
-                    { value: 'gato', label: 'Gato' },
-                    { value: 'otro', label: 'Otro' },
-                  ]}
                 />
                 <SelectField
                   label="Servicio"
