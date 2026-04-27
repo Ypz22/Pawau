@@ -28,3 +28,29 @@ Tambien puedes iniciarlo por separado con:
 npm run server
 npm run dev
 ```
+
+## Produccion con Nginx
+
+La configuracion de produccion queda separada en dos servicios:
+
+- `app`: servidor Node/Express para la API
+- `nginx`: sirve el frontend compilado y hace proxy de `/api` hacia `app`
+
+Archivos:
+
+- [Dockerfile](/Users/jeffersonyepez/PracticasProgramacion/Proyectos/PawauWebPage/Dockerfile:1)
+- [Dockerfile.nginx](/Users/jeffersonyepez/PracticasProgramacion/Proyectos/PawauWebPage/Dockerfile.nginx:1)
+- [nginx/nginx.conf](/Users/jeffersonyepez/PracticasProgramacion/Proyectos/PawauWebPage/nginx/nginx.conf:1)
+- [docker-compose.prod.yml](/Users/jeffersonyepez/PracticasProgramacion/Proyectos/PawauWebPage/docker-compose.prod.yml:1)
+
+Para levantar produccion:
+
+```bash
+docker compose -f docker-compose.prod.yml up --build
+```
+
+La aplicacion quedara disponible en:
+
+```bash
+http://localhost
+```
