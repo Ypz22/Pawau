@@ -76,16 +76,14 @@ function PetTypeSelector({
               type="button"
               onClick={() => onChange(option.value)}
               aria-pressed={isActive}
-              className={`flex min-h-[132px] flex-col items-center justify-center gap-3 rounded-[1.5rem] border px-3 py-4 text-center transition-all ${
-                isActive
+              className={`flex min-h-[132px] flex-col items-center justify-center gap-3 rounded-[1.5rem] border px-3 py-4 text-center transition-all ${isActive
                   ? 'border-primary-container bg-[#FFF1ED] shadow-[0_10px_24px_rgba(255,91,26,0.12)]'
                   : 'border-outline-variant bg-background hover:-translate-y-0.5 hover:border-primary-container/60 hover:bg-surface-container-low'
-              } ${error ? 'border-red-300' : ''}`}
+                } ${error ? 'border-red-300' : ''}`}
             >
               <div
-                className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-full ${
-                  isActive ? 'bg-[#FF5B1A] text-white shadow-[0_10px_20px_rgba(255,91,26,0.2)]' : 'bg-surface-container text-primary-container'
-                }`}
+                className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-full ${isActive ? 'bg-[#FF5B1A] text-white shadow-[0_10px_20px_rgba(255,91,26,0.2)]' : 'bg-surface-container text-primary-container'
+                  }`}
               >
                 <span className="material-symbols-outlined text-[30px]" style={{ fontVariationSettings: "'FILL' 1" }}>
                   {option.icon}
@@ -102,7 +100,7 @@ function PetTypeSelector({
 }
 
 export default function Booking() {
-  const bookingSideImage = 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT1nCWLlQAgdwyJL1SJDBYfCrZUlyA7uS9hnQ&s'; // PON_AQUI_LA_RUTA_DE_LA_IMAGEN_PARA_LA_PAGINA_DE_RESERVAS
+  const bookingSideImage = 'https://marketplace.canva.com/EAGJPQd6uwc/2/0/900w/canva-historia-de-instagram-horarios-de-atencion-veterinaria-organico-naranja-y-blanco-W3v0z5EwY6E.jpg'; // PON_AQUI_LA_RUTA_DE_LA_IMAGEN_PARA_LA_PAGINA_DE_RESERVAS
 
   const [form, setForm] = useState<BookingFormState>(initialBookingForm);
   const [services, setServices] = useState<ServiceItem[]>([]);
@@ -370,8 +368,8 @@ export default function Booking() {
                           type="button"
                           onClick={() => updateField('time', slot)}
                           className={`rounded-full px-4 py-2 text-sm font-bold transition-all ${form.time === slot
-                              ? 'bg-[#FF5B1A] text-white shadow-[0_4px_12px_rgba(255,91,26,0.3)]'
-                              : 'bg-surface-container text-on-surface hover:bg-surface-container-high'
+                            ? 'bg-[#FF5B1A] text-white shadow-[0_4px_12px_rgba(255,91,26,0.3)]'
+                            : 'bg-surface-container text-on-surface hover:bg-surface-container-high'
                             }`}
                         >
                           {slot}
