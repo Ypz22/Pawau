@@ -11,6 +11,7 @@ interface RevealProps {
   className?: string;
   delay?: number;
   as?: keyof typeof motionElements;
+  id?: string;
 }
 
 export default function Reveal({
@@ -18,11 +19,13 @@ export default function Reveal({
   className = '',
   delay = 0,
   as = 'div',
+  id,
 }: RevealProps) {
   const MotionTag = motionElements[as];
 
   return (
     <MotionTag
+      id={id}
       className={className}
       initial={{ opacity: 0, y: 28 }}
       whileInView={{ opacity: 1, y: 0 }}

@@ -38,7 +38,7 @@ export default function Services() {
           </p>
         </Reveal>
 
-        <Reveal as="section" className="mb-16" delay={0.04}>
+        <Reveal as="section" className="mb-16 scroll-mt-32" delay={0.04} id="GroomingPerros">
           <div className="mb-8 flex items-center gap-3">
             <span className="material-symbols-outlined text-primary-container" style={{ fontVariationSettings: "'FILL' 1" }}>
               pets
@@ -52,7 +52,7 @@ export default function Services() {
           </div>
         </Reveal>
 
-        <Reveal as="section" className="mb-16" delay={0.06}>
+        <Reveal as="section" className="mb-16 scroll-mt-32" delay={0.06} id="SpaGatos">
           <div className="mb-8 flex items-center gap-3">
             <span className="material-symbols-outlined text-primary-container" style={{ fontVariationSettings: "'FILL' 1" }}>
               cruelty_free
@@ -66,7 +66,7 @@ export default function Services() {
           </div>
         </Reveal>
 
-        <Reveal as="section" className="mb-16" delay={0.08}>
+        <Reveal as="section" className="mb-16 scroll-mt-32" delay={0.08} id="boutique">
           <div className="mb-8 flex items-center gap-3">
             <span className="material-symbols-outlined text-primary-container" style={{ fontVariationSettings: "'FILL' 1" }}>
               shopping_bag

@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 export default function Footer() {
   const location = useLocation();
   const currentPath = location.pathname;
+  const currentHash = location.hash;
 
   const navLinks = [
     { label: 'Inicio', to: '/' },
@@ -12,14 +13,22 @@ export default function Footer() {
   ];
 
   const serviceLinks = [
-    { label: 'Grooming Completo', to: '/servicios' },
-    { label: 'Baño Spa', to: '/servicios' },
-    { label: 'Corte de Uñas', to: '/servicios' },
-    { label: 'Boutique', to: '/servicios' },
+    { label: 'Grooming Completo', to: '/servicios#GroomingPerros' },
+    { label: 'Baño Spa', to: '/servicios#SpaGatos' },
+    { label: 'Boutique', to: '/servicios#boutique' },
   ];
 
   function getLinkClass(path: string) {
     return currentPath === path
+      ? 'font-bold text-[#FF5B1A] underline underline-offset-4 opacity-100'
+      : 'text-slate-500 underline underline-offset-4 opacity-80 transition-opacity hover:text-[#FF5B1A] hover:opacity-100';
+  }
+
+  function getServiceLinkClass(target: string) {
+    const [pathname, hash = ''] = target.split('#');
+    const normalizedHash = hash ? `#${hash}` : '';
+
+    return currentPath === pathname && currentHash === normalizedHash
       ? 'font-bold text-[#FF5B1A] underline underline-offset-4 opacity-100'
       : 'text-slate-500 underline underline-offset-4 opacity-80 transition-opacity hover:text-[#FF5B1A] hover:opacity-100';
   }
@@ -44,7 +53,7 @@ export default function Footer() {
 
         <div className="flex flex-col gap-3">
           {serviceLinks.map((link) => (
-            <Link key={link.label} className={getLinkClass(link.to)} to={link.to}>
+            <Link key={`${link.label}-${link.to}`} className={getServiceLinkClass(link.to)} to={link.to}>
               {link.label}
             </Link>
           ))}
