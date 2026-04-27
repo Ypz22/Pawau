@@ -9,6 +9,38 @@ export interface ServiceItem {
   price: number;
 }
 
+export const serviceCatalog: ServiceItem[] = [
+  {
+    id: 'grooming',
+    name: 'Grooming Completo',
+    description: 'Corte, bano, limpieza de oidos y unas.',
+    duration: 120,
+    price: 45,
+  },
+  {
+    id: 'bath',
+    name: 'Bano Spa',
+    description: 'Bano relajante con secado y cepillado.',
+    duration: 90,
+    price: 25,
+  },
+  {
+    id: 'nails',
+    name: 'Solo Unas',
+    description: 'Corte de unas y retoque higienico rapido.',
+    duration: 45,
+    price: 15,
+  },
+];
+
+export const bookingSettings = {
+  openingHour: 9,
+  closingHour: 18,
+  slotIntervalMinutes: 30,
+  maxAppointmentsPerSlot: 1,
+  closedWeekdays: [0],
+};
+
 export interface Appointment {
   id: number;
   owner_name: string;

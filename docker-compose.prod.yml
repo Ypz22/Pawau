@@ -1,22 +1,9 @@
 services:
-  app:
+  web:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: pawau-app
+    container_name: pawau-web
     restart: unless-stopped
-    env_file:
-      - .env
-    expose:
-      - "3001"
-
-  nginx:
-    build:
-      context: .
-      dockerfile: Dockerfile.nginx
-    container_name: pawau-nginx
-    restart: unless-stopped
-    depends_on:
-      - app
     ports:
       - "80:80"

@@ -2,7 +2,6 @@ import type { ReactNode } from 'react';
 import { CalendarDays, ClipboardList, LayoutDashboard, LogOut } from 'lucide-react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { adminLogout } from '../lib/api';
-import { clearAdminToken } from '../lib/admin';
 
 interface AdminLayoutProps {
   title: string;
@@ -22,10 +21,7 @@ export default function AdminLayout({ title, subtitle, children }: AdminLayoutPr
   async function handleLogout() {
     try {
       await adminLogout();
-    } catch {
-      // ignore logout network failures and clear local session anyway
     } finally {
-      clearAdminToken();
       navigate('/admin/login', { replace: true });
     }
   }

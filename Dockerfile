@@ -1,31 +1,15 @@
-FROM node:22-bookworm-slim AS base
+FROM node:22-bookworm-slim AS build
 WORKDIR /app
-
-FROM base AS deps
 COPY package.json package-lock.json ./
 RUN npm ci
 
-FROM deps AS build
 COPY . .
 RUN npm run build
 
-FROM node:22-bookworm-slim AS production
-WORKDIR /app
+FROM nginx:1.27-alpine AS production
+COPY nginx/nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=build /app/dist /usr/share/nginx/html
 
-ENV NODE_ENV=production
-ENV PORT=3001
+EXPOSE 80
 
-COPY package.json package-lock.json ./
-RUN npm ci --omit=dev && npm cache clean --force
-
-COPY --from=build /app/dist ./dist
-COPY --from=build /app/server ./server
-COPY --from=build /app/supabase ./supabase
-
-RUN chown -R node:node /app
-
-USER node
-
-EXPOSE 3001
-
-CMD ["npm", "run", "start"]
+CMD ["nginx", "-g", "daemon off;"]

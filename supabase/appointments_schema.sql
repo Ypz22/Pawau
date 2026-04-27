@@ -17,3 +17,64 @@ create table if not exists public.appointments (
 
 create index if not exists appointments_date_idx on public.appointments (appointment_date);
 create index if not exists appointments_status_idx on public.appointments (status);
+
+alter table public.appointments enable row level security;
+
+drop policy if exists "public_can_insert_appointments" on public.appointments;
+create policy "public_can_insert_appointments"
+on public.appointments
+for insert
+to anon, authenticated
+with check (
+  owner_name is not null
+  and owner_phone is not null
+  and owner_email is not null
+  and pet_name is not null
+  and pet_type in ('perro', 'gato', 'otro')
+  and service_id in ('grooming', 'bath', 'nails')
+  and status = 'pending'
+);
+
+drop policy if exists "admin_can_select_appointments" on public.appointments;
+create policy "admin_can_select_appointments"
+on public.appointments
+for select
+to authenticated
+using ((auth.jwt() -> 'app_metadata' ->> 'role') = 'admin');
+
+drop policy if exists "admin_can_update_appointments" on public.appointments;
+create policy "admin_can_update_appointments"
+on public.appointments
+for update
+to authenticated
+using ((auth.jwt() -> 'app_metadata' ->> 'role') = 'admin')
+with check ((auth.jwt() -> 'app_metadata' ->> 'role') = 'admin');
+
+create or replace function public.get_public_appointments_for_date(target_date date)
+returns table (
+  id bigint,
+  service_id text,
+  appointment_date date,
+  appointment_time time,
+  start_at timestamptz,
+  end_at timestamptz,
+  status text
+)
+language sql
+security definer
+set search_path = public
+as $$
+  select
+    appointments.id,
+    appointments.service_id,
+    appointments.appointment_date,
+    appointments.appointment_time,
+    appointments.start_at,
+    appointments.end_at,
+    appointments.status
+  from public.appointments
+  where appointments.appointment_date = target_date
+    and appointments.status in ('pending', 'confirmed');
+$$;
+
+grant execute on function public.get_public_appointments_for_date(date) to anon, authenticated;

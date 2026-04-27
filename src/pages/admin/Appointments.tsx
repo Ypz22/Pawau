@@ -65,7 +65,9 @@ export default function AdminAppointments() {
       }
 
       try {
-        const response = await getAvailability(rescheduleDate, activeAppointment.service_id);
+        const response = await getAvailability(rescheduleDate, activeAppointment.service_id, {
+          excludeAppointmentId: activeAppointment.id,
+        });
         setAvailableSlots(response.slots);
       } catch {
         setAvailableSlots([]);
@@ -227,12 +229,17 @@ export default function AdminAppointments() {
                       type="date"
                       min={getMinBookingDate()}
                       value={rescheduleDate}
-                      onChange={(event) => setRescheduleDate(event.target.value)}
+                      onChange={(event) => {
+                        setRescheduleDate(event.target.value);
+                        setRescheduleTime('');
+                      }}
                     />
 
                     <div className="flex flex-wrap gap-2">
                       {availableSlots.length === 0 ? (
-                        <span className="self-center text-sm text-on-surface-variant">Selecciona una fecha para ver horarios.</span>
+                        <span className="self-center text-sm text-on-surface-variant">
+                          {rescheduleDate ? 'No hay horarios disponibles para esa fecha.' : 'Selecciona una fecha para ver horarios.'}
+                        </span>
                       ) : (
                         availableSlots.map((slot) => (
                           <button

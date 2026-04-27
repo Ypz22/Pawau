@@ -52,7 +52,7 @@ export default function Contact() {
               </div>
               <div>
                 <h3 className="mb-1 text-sm font-bold uppercase tracking-[0.05em] text-on-surface">Dirección</h3>
-                <p className="text-on-surface-variant">{address}</p>
+                <p className="text-on-surface-variant">{"Ricardo Sánchez, y Maldonado, Ibarra"}</p>
               </div>
             </div>
 

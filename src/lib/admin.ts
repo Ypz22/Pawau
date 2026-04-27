@@ -1,3 +1,4 @@
+import type { User } from '@supabase/supabase-js';
 import type { Appointment, AppointmentStatus } from './booking';
 
 export interface AdminUser {
@@ -16,16 +17,13 @@ export interface AdminAppointment extends Appointment {
   service_price: number | null;
 }
 
-export const ADMIN_TOKEN_KEY = 'pawau_admin_token';
-
-export function getAdminToken() {
-  return localStorage.getItem(ADMIN_TOKEN_KEY) ?? '';
+export function isAdminUser(user: User | null | undefined) {
+  return user?.app_metadata?.role === 'admin';
 }
 
-export function setAdminToken(token: string) {
-  localStorage.setItem(ADMIN_TOKEN_KEY, token);
-}
-
-export function clearAdminToken() {
-  localStorage.removeItem(ADMIN_TOKEN_KEY);
+export function mapAdminUser(user: User): AdminUser {
+  return {
+    email: user.email ?? '',
+    createdAt: user.created_at,
+  };
 }

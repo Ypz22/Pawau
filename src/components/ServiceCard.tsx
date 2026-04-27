@@ -19,24 +19,29 @@ export default function ServiceCard({ title, description, icon, imageUrl, price 
     >
       {imageUrl && (
         <div className="h-52 w-full overflow-hidden">
-          <img 
-            src={imageUrl} 
-            alt={title} 
+          <img
+            src={imageUrl}
+            alt={title}
             className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
           />
         </div>
       )}
-      
+
       <div className="relative p-8">
-        <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-full bg-surface-container text-primary-container">
-          {icon || <PawPrint className="w-6 h-6" />}
+        <div className="mb-6 flex items-center gap-4">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-surface-container text-primary-container">
+            {icon || <PawPrint className="h-6 w-6" />}
+          </div>
+
+          <h3 className="text-2xl font-bold text-on-surface">
+            {title}
+          </h3>
         </div>
-        
-        <h3 className="mb-3 text-xl font-bold text-on-surface">{title}</h3>
+
         <p className="mb-6 leading-relaxed text-on-surface-variant">
           {description}
         </p>
-        
+
         {price && (
           <div className="font-extrabold text-primary-container">
             {price}

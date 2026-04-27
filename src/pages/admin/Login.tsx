@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { ArrowLeft, LockKeyhole, ShieldCheck } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { adminLogin } from '../../lib/api';
-import { setAdminToken } from '../../lib/admin';
 
 export default function AdminLogin() {
   const navigate = useNavigate();
@@ -18,8 +17,7 @@ export default function AdminLogin() {
     setIsSubmitting(true);
 
     try {
-      const response = await adminLogin(email, password);
-      setAdminToken(response.token);
+      await adminLogin(email, password);
       const nextPath = (location.state as { from?: string } | null)?.from ?? '/admin/dashboard';
       navigate(nextPath, { replace: true });
     } catch (loginError) {
