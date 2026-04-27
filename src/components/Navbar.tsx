@@ -14,59 +14,59 @@ export default function Navbar() {
   ];
 
   return (
-    <nav className="fixed w-full z-50 bg-brand-cream/78 backdrop-blur-xl border-b border-white/40 shadow-[0_8px_30px_rgba(45,41,38,0.05)] transition-all">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-20">
-          <div className="flex-shrink-0 flex items-center">
-            <Link to="/" className="text-2xl font-extrabold text-brand-primary tracking-tight">
-              Pawau<span className="text-brand-charcoal"> Boutique & Spa</span>
-            </Link>
-          </div>
-          
-          {/* Desktop Menu */}
-          <div className="hidden md:flex items-center space-x-8">
-            {navLinks.map((link) => (
-              <Link
-                key={link.name}
-                to={link.path}
-                className={`text-sm font-bold tracking-wide transition-colors ${
-                  location.pathname === link.path ? 'text-brand-primary' : 'text-brand-charcoal hover:text-brand-primary'
-                }`}
-              >
-                {link.name}
-              </Link>
-            ))}
-            <Button to="/agendar">Agendar Cita</Button>
-          </div>
-
-          {/* Mobile menu button */}
-          <div className="md:hidden flex items-center">
-            <button
-              onClick={() => setIsOpen(!isOpen)}
-              className="text-brand-charcoal hover:text-brand-primary focus:outline-none"
+    <nav className="fixed top-0 z-50 w-full rounded-b-[32px] bg-[#FFF3E6]/80 shadow-[0_10px_30px_rgba(255,91,26,0.05)] backdrop-blur-md">
+      <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6">
+        <div className="flex shrink-0 items-center">
+          <Link to="/" className="flex items-center gap-1 text-2xl font-black tracking-tight text-[#FF5B1A]">
+            <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>
+              favorite
+            </span>
+            Pawau
+          </Link>
+        </div>
+        
+        <div className="hidden items-center gap-8 md:flex">
+          {navLinks.map((link) => (
+            <Link
+              key={link.name}
+              to={link.path}
+              className={`text-sm font-semibold tracking-tight transition-colors ${
+                location.pathname === link.path ? 'text-[#FF5B1A]' : 'text-slate-600 hover:text-[#FF5B1A]'
+              }`}
             >
-              {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-            </button>
-          </div>
+              {link.name}
+            </Link>
+          ))}
+          <Button to="/agendar">Agendar Cita</Button>
+        </div>
+
+        <div className="flex items-center md:hidden">
+          <button
+            onClick={() => setIsOpen(!isOpen)}
+            className="text-[#5B4138] transition-colors hover:text-[#FF5B1A]"
+          >
+            {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          </button>
         </div>
       </div>
 
-      {/* Mobile Menu */}
       {isOpen && (
-        <div className="md:hidden bg-brand-cream/95 backdrop-blur-xl border-t border-brand-charcoal/5">
-          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 flex flex-col">
+        <div className="border-t border-[#E4BEB3] bg-[#FFF8F6]/95 px-6 py-4 backdrop-blur-md md:hidden">
+          <div className="flex flex-col gap-2">
             {navLinks.map((link) => (
               <Link
                 key={link.name}
                 to={link.path}
                 onClick={() => setIsOpen(false)}
-                className="block px-3 py-2 text-base font-bold text-brand-charcoal hover:text-brand-primary hover:bg-brand-charcoal/5 rounded-md"
+                className="rounded-2xl px-4 py-3 text-base font-semibold text-slate-700 transition-colors hover:bg-[#FFF1ED] hover:text-[#FF5B1A]"
               >
                 {link.name}
               </Link>
             ))}
-            <div className="px-3 py-2 mt-4">
-              <Button to="/agendar" className="w-full justify-center">Agendar Cita</Button>
+            <div className="mt-3">
+              <Button to="/agendar" className="w-full justify-center">
+                Agendar Cita
+              </Button>
             </div>
           </div>
         </div>
