@@ -54,6 +54,9 @@ export default function Footer() {
           <span className="text-slate-500">@pawau_ec</span>
           <span className="text-slate-500">Ibarra, Ecuador</span>
           <span className="text-slate-500">+593 99 999 9999</span>
+          <Link className="text-slate-400 underline underline-offset-4 opacity-70 transition-opacity hover:text-[#FF5B1A] hover:opacity-100" to="/admin/login">
+            Acceso administrativo
+          </Link>
         </div>
       </div>
     </footer>

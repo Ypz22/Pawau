@@ -1,4 +1,5 @@
 import cors from 'cors';
+import crypto from 'node:crypto';
 import express from 'express';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -12,6 +13,9 @@ const __dirname = path.dirname(__filename);
 const PORT = Number(process.env.PORT ?? 3001);
 const DB_DIR = path.join(__dirname, 'data');
 const DB_PATH = path.join(DB_DIR, 'appointments.db');
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? 'admin@pawau.com';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? 'admin1234';
+const ADMIN_SECRET = process.env.ADMIN_SECRET ?? 'pawau-admin-secret';
 
 const PET_TYPES = ['perro', 'gato', 'otro'];
 const APPOINTMENT_STATUSES = ['pending', 'confirmed', 'completed', 'cancelled'];
@@ -76,6 +80,76 @@ function isClosedDay(dateString) {
 
 function overlaps(startA, endA, startB, endB) {
   return startA < endB && startB < endA;
+}
+
+function signAdminPayload(payload) {
+  return crypto
+    .createHmac('sha256', ADMIN_SECRET)
+    .update(payload)
+    .digest('hex');
+}
+
+function createAdminToken(email) {
+  const payload = Buffer.from(
+    JSON.stringify({
+      email,
+      exp: Date.now() + 7 * 24 * 60 * 60 * 1000,
+    })
+  ).toString('base64url');
+
+  const signature = signAdminPayload(payload);
+  return `${payload}.${signature}`;
+}
+
+function verifyAdminToken(token) {
+  const [payload, signature] = token.split('.');
+
+  if (!payload || !signature) {
+    return null;
+  }
+
+  const expectedSignature = signAdminPayload(payload);
+
+  if (signature !== expectedSignature) {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
+
+    if (!parsed?.email || !parsed?.exp || parsed.exp < Date.now()) {
+      return null;
+    }
+
+    return {
+      email: parsed.email,
+      exp: parsed.exp,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function getAuthToken(req) {
+  const authorization = req.headers.authorization ?? '';
+
+  if (!authorization.startsWith('Bearer ')) {
+    return '';
+  }
+
+  return authorization.slice(7);
+}
+
+function requireAdmin(req, res, next) {
+  const token = getAuthToken(req);
+  const session = verifyAdminToken(token);
+
+  if (!token || !session) {
+    return res.status(401).json({ message: 'No autorizado.' });
+  }
+
+  req.adminSession = session;
+  return next();
 }
 
 async function getDatabase() {
@@ -179,6 +253,31 @@ function buildAvailableSlots(existingAppointments, date, service) {
   return slots;
 }
 
+function serializeAppointmentWithService(appointment) {
+  const service = SERVICES.find((item) => item.id === appointment.service_id);
+
+  return {
+    ...appointment,
+    service_name: service?.name ?? appointment.service_id,
+    service_duration: service?.duration ?? null,
+    service_price: service?.price ?? null,
+  };
+}
+
+function getStatusSummary(appointments) {
+  return {
+    pending: appointments.filter((appointment) => appointment.status === 'pending').length,
+    confirmed: appointments.filter((appointment) => appointment.status === 'confirmed').length,
+    cancelled: appointments.filter((appointment) => appointment.status === 'cancelled').length,
+    completed: appointments.filter((appointment) => appointment.status === 'completed').length,
+    total: appointments.length,
+  };
+}
+
+async function loadAppointmentById(id) {
+  return db.get('SELECT * FROM appointments WHERE id = ?', id);
+}
+
 const db = await getDatabase();
 const app = express();
 
@@ -194,6 +293,34 @@ app.get('/api/services', (_req, res) => {
     services: SERVICES,
     settings: SETTINGS,
   });
+});
+
+app.post('/api/admin/login', (req, res) => {
+  const email = String(req.body?.email ?? '').trim().toLowerCase();
+  const password = String(req.body?.password ?? '');
+
+  if (email !== ADMIN_EMAIL.toLowerCase() || password !== ADMIN_PASSWORD) {
+    return res.status(401).json({ message: 'Credenciales inválidas.' });
+  }
+
+  const token = createAdminToken(ADMIN_EMAIL);
+
+  return res.json({
+    token,
+    admin: {
+      email: ADMIN_EMAIL,
+    },
+  });
+});
+
+app.get('/api/admin/me', requireAdmin, (req, res) => {
+  res.json({
+    admin: req.adminSession,
+  });
+});
+
+app.post('/api/admin/logout', requireAdmin, (req, res) => {
+  res.json({ ok: true });
 });
 
 app.get('/api/availability', async (req, res) => {
@@ -235,6 +362,52 @@ app.get('/api/appointments', async (req, res) => {
 
   const appointments = await db.all(query, values);
   return res.json({ appointments });
+});
+
+app.get('/api/admin/appointments', requireAdmin, async (req, res) => {
+  const date = String(req.query.date ?? '').trim();
+  const status = String(req.query.status ?? '').trim();
+
+  let query = `
+    SELECT * FROM appointments
+    WHERE 1 = 1
+  `;
+  const values = [];
+
+  if (date) {
+    query += ' AND appointment_date = ?';
+    values.push(date);
+  }
+
+  if (status && APPOINTMENT_STATUSES.includes(status)) {
+    query += ' AND status = ?';
+    values.push(status);
+  }
+
+  query += ' ORDER BY appointment_date ASC, appointment_time ASC, created_at DESC';
+
+  const appointments = await db.all(query, values);
+
+  res.json({
+    appointments: appointments.map(serializeAppointmentWithService),
+    summary: getStatusSummary(appointments),
+  });
+});
+
+app.get('/api/admin/overview', requireAdmin, async (_req, res) => {
+  const appointments = await db.all(
+    `SELECT * FROM appointments
+     ORDER BY appointment_date ASC, appointment_time ASC, created_at DESC`
+  );
+  const upcoming = appointments
+    .filter((appointment) => new Date(appointment.start_at) >= new Date())
+    .slice(0, 5)
+    .map(serializeAppointmentWithService);
+
+  res.json({
+    summary: getStatusSummary(appointments),
+    upcoming,
+  });
 });
 
 app.post('/api/appointments', async (req, res) => {
@@ -312,6 +485,91 @@ app.patch('/api/appointments/:id/status', async (req, res) => {
   return res.json({
     message: 'Estado actualizado.',
     appointment,
+  });
+});
+
+app.patch('/api/admin/appointments/:id/status', requireAdmin, async (req, res) => {
+  const id = Number(req.params.id);
+  const status = String(req.body?.status ?? '');
+
+  if (!Number.isInteger(id) || !APPOINTMENT_STATUSES.includes(status)) {
+    return res.status(400).json({ message: 'Solicitud invalida.' });
+  }
+
+  const result = await db.run('UPDATE appointments SET status = ? WHERE id = ?', [status, id]);
+
+  if (result.changes === 0) {
+    return res.status(404).json({ message: 'No se encontro la cita.' });
+  }
+
+  const appointment = await loadAppointmentById(id);
+
+  res.json({
+    message: 'Estado actualizado.',
+    appointment: serializeAppointmentWithService(appointment),
+  });
+});
+
+app.patch('/api/admin/appointments/:id/reschedule', requireAdmin, async (req, res) => {
+  const id = Number(req.params.id);
+  const date = String(req.body?.date ?? '').trim();
+  const time = String(req.body?.time ?? '').trim();
+
+  if (!Number.isInteger(id) || !date || !time) {
+    return res.status(400).json({ message: 'Fecha y hora son obligatorias.' });
+  }
+
+  const appointment = await loadAppointmentById(id);
+
+  if (!appointment) {
+    return res.status(404).json({ message: 'No se encontro la cita.' });
+  }
+
+  const service = SERVICES.find((item) => item.id === appointment.service_id);
+
+  if (!service) {
+    return res.status(400).json({ message: 'El servicio de la cita no es valido.' });
+  }
+
+  if (isClosedDay(date)) {
+    return res.status(400).json({ message: 'No atendemos en la fecha seleccionada.' });
+  }
+
+  const selectedDate = createLocalDate(date, time);
+
+  if (Number.isNaN(selectedDate.getTime())) {
+    return res.status(400).json({ message: 'La fecha u hora no es valida.' });
+  }
+
+  const dayAppointments = await db.all(
+    `SELECT * FROM appointments
+     WHERE appointment_date = ?
+       AND status IN ('pending', 'confirmed')
+       AND id != ?`,
+    [date, id]
+  );
+
+  const availableSlots = buildAvailableSlots(dayAppointments, date, service);
+
+  if (!availableSlots.includes(time)) {
+    return res.status(409).json({ message: 'Ese horario no esta disponible para reprogramar.' });
+  }
+
+  const startAt = toIso(date, time);
+  const endAt = addMinutes(createLocalDate(date, time), service.duration).toISOString();
+
+  await db.run(
+    `UPDATE appointments
+     SET appointment_date = ?, appointment_time = ?, start_at = ?, end_at = ?, status = 'confirmed'
+     WHERE id = ?`,
+    [date, time, startAt, endAt, id]
+  );
+
+  const updatedAppointment = await loadAppointmentById(id);
+
+  res.json({
+    message: 'Cita reprogramada correctamente.',
+    appointment: serializeAppointmentWithService(updatedAppointment),
   });
 });
 
