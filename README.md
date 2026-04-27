@@ -46,3 +46,34 @@ La aplicacion quedara disponible en:
 ```bash
 http://localhost
 ```
+
+## Deploy en Vercel o Hostinger
+
+Si la pagina no carga al subirla, en este proyecto normalmente hay dos causas:
+
+1. Faltan variables de entorno en el hosting.
+2. Faltan reglas de rewrite para rutas SPA como `/servicios` o `/admin/login`.
+
+Variables que debes configurar en Vercel o en tu panel de hosting:
+
+```bash
+VITE_SUPABASE_URL=...
+VITE_SUPABASE_ANON_KEY=...
+VITE_SUPABASE_APPOINTMENTS_TABLE=appointments
+```
+
+Archivos ya preparados en el proyecto:
+
+- [vercel.json](/Users/jeffersonyepez/PracticasProgramacion/Proyectos/PawauWebPage/vercel.json:1) para rewrites en Vercel
+- [public/.htaccess](/Users/jeffersonyepez/PracticasProgramacion/Proyectos/PawauWebPage/public/.htaccess:1) para hosting Apache como Hostinger compartido
+
+En Vercel:
+
+- Framework preset: `Vite`
+- Build command: `npm run build`
+- Output directory: `dist`
+
+En Hostinger:
+
+- sube el contenido de `dist`
+- si usas hosting Apache, asegúrate de subir tambien el `.htaccess`
