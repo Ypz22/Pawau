@@ -578,7 +578,7 @@ const CLIENT_DIST = path.resolve(__dirname, '..', 'dist');
 if (fs.existsSync(CLIENT_DIST)) {
   app.use(express.static(CLIENT_DIST));
 
-  app.get('/*', (_req, res) => {
+  app.get('*', (_req, res) => {
     res.sendFile(path.join(CLIENT_DIST, 'index.html'));
   });
 }
