@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { BadgeCheck, CalendarClock, CheckCircle2, RotateCcw, XCircle } from 'lucide-react';
 import AdminLayout from '../../components/AdminLayout';
 import Reveal from '../../components/Reveal';
 import { getAdminAppointments, getAvailability, rescheduleAdminAppointment, updateAdminAppointmentStatus } from '../../lib/api';
@@ -22,6 +23,7 @@ export default function AdminAppointments() {
   const [rescheduleDate, setRescheduleDate] = useState('');
   const [rescheduleTime, setRescheduleTime] = useState('');
   const [availableSlots, setAvailableSlots] = useState<string[]>([]);
+  const [pendingAction, setPendingAction] = useState<string | null>(null);
 
   const activeAppointment = useMemo(
     () => appointments.find((appointment) => appointment.id === rescheduleId) ?? null,
@@ -79,6 +81,7 @@ export default function AdminAppointments() {
 
   async function handleStatusChange(id: number, status: AppointmentStatus) {
     try {
+      setPendingAction(`${id}:${status}`);
       setError('');
       await updateAdminAppointmentStatus(id, status);
       setFeedback(
@@ -91,6 +94,8 @@ export default function AdminAppointments() {
     } catch (updateError) {
       const payload = updateError as { message?: string };
       setError(payload.message ?? 'No pudimos actualizar el estado de la cita.');
+    } finally {
+      setPendingAction(null);
     }
   }
 
@@ -101,6 +106,7 @@ export default function AdminAppointments() {
     }
 
     try {
+      setPendingAction(`${rescheduleId}:reschedule`);
       setError('');
       await rescheduleAdminAppointment(rescheduleId, rescheduleDate, rescheduleTime);
       setFeedback('La cita fue reprogramada correctamente.');
@@ -113,7 +119,20 @@ export default function AdminAppointments() {
     } catch (rescheduleError) {
       const payload = rescheduleError as { message?: string };
       setError(payload.message ?? 'No pudimos reprogramar esa cita.');
+    } finally {
+      setPendingAction(null);
     }
+  }
+
+  function closeReschedulePanel() {
+    setRescheduleId(null);
+    setRescheduleDate('');
+    setRescheduleTime('');
+    setAvailableSlots([]);
+  }
+
+  function isBusy(actionKey: string) {
+    return pendingAction === actionKey;
   }
 
   return (
@@ -194,18 +213,36 @@ export default function AdminAppointments() {
                   </div>
                 </div>
 
-                <div className="flex flex-wrap gap-3 xl:max-w-[340px]">
-                  <button className="rounded-full bg-emerald-500 px-5 py-3 font-bold text-white transition-all hover:-translate-y-0.5" type="button" onClick={() => void handleStatusChange(appointment.id, 'confirmed')}>
-                    Confirmar
-                  </button>
-                  <button className="rounded-full bg-rose-500 px-5 py-3 font-bold text-white transition-all hover:-translate-y-0.5" type="button" onClick={() => void handleStatusChange(appointment.id, 'cancelled')}>
-                    Cancelar
-                  </button>
-                  <button className="rounded-full bg-sky-500 px-5 py-3 font-bold text-white transition-all hover:-translate-y-0.5" type="button" onClick={() => void handleStatusChange(appointment.id, 'completed')}>
-                    Completar
+                <div className="grid gap-3 sm:grid-cols-2 xl:min-w-[340px] xl:max-w-[360px]">
+                  <button
+                    className="inline-flex items-center justify-center gap-2 rounded-[1.1rem] bg-emerald-500 px-5 py-3 text-sm font-bold text-white shadow-[0_10px_20px_rgba(16,185,129,0.18)] transition-all hover:-translate-y-0.5 hover:bg-emerald-600 disabled:cursor-not-allowed disabled:bg-emerald-200 disabled:text-white/80 disabled:shadow-none"
+                    type="button"
+                    disabled={appointment.status === 'confirmed' || appointment.status === 'completed' || isBusy(`${appointment.id}:confirmed`)}
+                    onClick={() => void handleStatusChange(appointment.id, 'confirmed')}
+                  >
+                    <CheckCircle2 className="h-4 w-4" />
+                    {isBusy(`${appointment.id}:confirmed`) ? 'Confirmando...' : 'Confirmar'}
                   </button>
                   <button
-                    className="rounded-full border border-outline-variant bg-white px-5 py-3 font-bold text-on-surface transition-all hover:-translate-y-0.5 hover:border-primary-container hover:text-primary-container"
+                    className="inline-flex items-center justify-center gap-2 rounded-[1.1rem] bg-rose-500 px-5 py-3 text-sm font-bold text-white shadow-[0_10px_20px_rgba(244,63,94,0.18)] transition-all hover:-translate-y-0.5 hover:bg-rose-600 disabled:cursor-not-allowed disabled:bg-rose-200 disabled:text-white/80 disabled:shadow-none"
+                    type="button"
+                    disabled={appointment.status === 'cancelled' || appointment.status === 'completed' || isBusy(`${appointment.id}:cancelled`)}
+                    onClick={() => void handleStatusChange(appointment.id, 'cancelled')}
+                  >
+                    <XCircle className="h-4 w-4" />
+                    {isBusy(`${appointment.id}:cancelled`) ? 'Cancelando...' : 'Cancelar'}
+                  </button>
+                  <button
+                    className="inline-flex items-center justify-center gap-2 rounded-[1.1rem] bg-sky-500 px-5 py-3 text-sm font-bold text-white shadow-[0_10px_20px_rgba(14,165,233,0.18)] transition-all hover:-translate-y-0.5 hover:bg-sky-600 disabled:cursor-not-allowed disabled:bg-sky-200 disabled:text-white/80 disabled:shadow-none"
+                    type="button"
+                    disabled={appointment.status === 'completed' || appointment.status === 'cancelled' || isBusy(`${appointment.id}:completed`)}
+                    onClick={() => void handleStatusChange(appointment.id, 'completed')}
+                  >
+                    <BadgeCheck className="h-4 w-4" />
+                    {isBusy(`${appointment.id}:completed`) ? 'Completando...' : 'Completar'}
+                  </button>
+                  <button
+                    className="inline-flex items-center justify-center gap-2 rounded-[1.1rem] border border-outline-variant bg-white px-5 py-3 text-sm font-bold text-on-surface shadow-[0_10px_20px_rgba(39,24,19,0.05)] transition-all hover:-translate-y-0.5 hover:border-primary-container hover:bg-surface-container-low hover:text-primary-container"
                     type="button"
                     onClick={() => {
                       setRescheduleId(appointment.id);
@@ -215,17 +252,32 @@ export default function AdminAppointments() {
                       setError('');
                     }}
                   >
+                    <CalendarClock className="h-4 w-4" />
                     Reprogramar
                   </button>
                 </div>
               </div>
 
               {rescheduleId === appointment.id && (
-                <div className="mt-6 rounded-[1.5rem] bg-surface-container-low p-5">
-                  <h4 className="text-lg font-bold text-on-surface">Reprogramar cita</h4>
-                  <div className="mt-4 grid gap-4 md:grid-cols-[220px_1fr_auto]">
+                <div className="mt-6 rounded-[1.75rem] border border-outline-variant/60 bg-[linear-gradient(135deg,#fff7f3_0%,#fff1ed_100%)] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.75)]">
+                  <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                    <div>
+                      <h4 className="text-lg font-bold text-on-surface">Reprogramar cita</h4>
+                      <p className="text-sm text-on-surface-variant">Elige una nueva fecha y selecciona uno de los horarios disponibles.</p>
+                    </div>
+                    <button
+                      className="inline-flex items-center gap-2 self-start rounded-full px-4 py-2 text-sm font-bold text-on-surface-variant transition-colors hover:bg-white/70 hover:text-on-surface"
+                      type="button"
+                      onClick={closeReschedulePanel}
+                    >
+                      <RotateCcw className="h-4 w-4" />
+                      Cerrar
+                    </button>
+                  </div>
+
+                  <div className="mt-5 grid gap-4 xl:grid-cols-[220px_1fr]">
                     <input
-                      className="rounded-[1rem] border border-outline-variant bg-white px-4 py-3"
+                      className="rounded-[1rem] border border-outline-variant bg-white px-4 py-3 shadow-[0_8px_18px_rgba(39,24,19,0.04)]"
                       type="date"
                       min={getMinBookingDate()}
                       value={rescheduleDate}
@@ -235,7 +287,9 @@ export default function AdminAppointments() {
                       }}
                     />
 
-                    <div className="flex flex-wrap gap-2">
+                    <div className="rounded-[1.25rem] bg-white/80 p-4 shadow-[0_10px_22px_rgba(39,24,19,0.04)]">
+                      <p className="mb-3 text-xs font-bold uppercase tracking-[0.08em] text-on-surface-variant">Horarios disponibles</p>
+                      <div className="flex flex-wrap gap-2">
                       {availableSlots.length === 0 ? (
                         <span className="self-center text-sm text-on-surface-variant">
                           {rescheduleDate ? 'No hay horarios disponibles para esa fecha.' : 'Selecciona una fecha para ver horarios.'}
@@ -244,8 +298,10 @@ export default function AdminAppointments() {
                         availableSlots.map((slot) => (
                           <button
                             key={slot}
-                            className={`rounded-full px-4 py-2 text-sm font-bold transition-all ${
-                              rescheduleTime === slot ? 'bg-[#FF5B1A] text-white' : 'bg-white text-on-surface hover:bg-surface-container'
+                            className={`rounded-full border px-4 py-2 text-sm font-bold transition-all ${
+                              rescheduleTime === slot
+                                ? 'border-[#FF5B1A] bg-[#FF5B1A] text-white shadow-[0_8px_18px_rgba(255,91,26,0.24)]'
+                                : 'border-outline-variant bg-white text-on-surface hover:border-primary-container hover:bg-surface-container'
                             }`}
                             type="button"
                             onClick={() => setRescheduleTime(slot)}
@@ -255,13 +311,25 @@ export default function AdminAppointments() {
                         ))
                       )}
                     </div>
+                    </div>
+                  </div>
 
+                  <div className="mt-5 flex flex-wrap items-center justify-end gap-3">
                     <button
-                      className="rounded-full bg-[#FF5B1A] px-5 py-3 font-bold text-white transition-all hover:-translate-y-0.5"
+                      className="inline-flex items-center justify-center gap-2 rounded-full border border-outline-variant bg-white px-5 py-3 font-bold text-on-surface transition-all hover:-translate-y-0.5 hover:border-primary-container hover:text-primary-container"
                       type="button"
+                      onClick={closeReschedulePanel}
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      className="inline-flex items-center justify-center gap-2 rounded-full bg-[#FF5B1A] px-6 py-3 font-bold text-white shadow-[0_12px_24px_rgba(255,91,26,0.22)] transition-all hover:-translate-y-0.5 hover:bg-[#ff6a30] disabled:cursor-not-allowed disabled:bg-[#ffb59d] disabled:shadow-none"
+                      type="button"
+                      disabled={!rescheduleTime || isBusy(`${appointment.id}:reschedule`)}
                       onClick={() => void handleReschedule()}
                     >
-                      Guardar
+                      <CalendarClock className="h-4 w-4" />
+                      {isBusy(`${appointment.id}:reschedule`) ? 'Guardando...' : 'Guardar nueva fecha'}
                     </button>
                   </div>
                 </div>
