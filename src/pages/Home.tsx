@@ -1,6 +1,8 @@
 import Button from '../components/Button';
 import Reveal from '../components/Reveal';
+import Seo from '../components/Seo';
 import ServiceCard from '../components/ServiceCard';
+import { buildOrganizationSchema, buildWebsiteSchema, siteConfig } from '../lib/seo';
 
 export default function Home() {
   const heroImage = 'https://thumbs.dreamstime.com/b/retrato-perro-de-bulldog-ingl%C3%A9s-con-gafas-sol-fondo-naranja-fotograf%C3%ADa-perros-toros-ingleses-ropa-accesorios-raza-fotogr%C3%A1fica-294516501.jpg'; // PON_AQUI_LA_RUTA_DE_LA_IMAGEN_PRINCIPAL
@@ -44,6 +46,13 @@ export default function Home() {
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-background px-6 pb-16 pt-32">
+      <Seo
+        title={siteConfig.defaultTitle}
+        description="Boutique, grooming y spa para mascotas en Ibarra. Reserva citas para baño spa, grooming completo y encuentra accesorios especiales para tu perro o gato."
+        path="/"
+        image={heroImage}
+        schema={[buildOrganizationSchema(), buildWebsiteSchema()]}
+      />
       <main className="mx-auto w-full max-w-[1280px]">
         <Reveal as="section" className="mb-20 grid items-center gap-10 lg:grid-cols-[1.08fr_0.92fr]">
           <div>

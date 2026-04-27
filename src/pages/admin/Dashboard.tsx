@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import AdminLayout from '../../components/AdminLayout';
 import Reveal from '../../components/Reveal';
+import Seo from '../../components/Seo';
 import { getAdminOverview } from '../../lib/api';
 import type { AdminAppointment, AdminOverview } from '../../lib/admin';
 import { formatReadableDate } from '../../lib/booking';
@@ -41,6 +42,12 @@ export default function AdminDashboard() {
 
   return (
     <AdminLayout title="Dashboard" subtitle="Visualiza el estado general de las citas y revisa las próximas reservas de un vistazo.">
+      <Seo
+        title="Dashboard Administrativo | Pawau Boutique & Spa"
+        description="Panel privado para administrar citas de Pawau Boutique & Spa."
+        path="/admin/dashboard"
+        noIndex
+      />
       {error && <p className="mb-6 text-sm font-semibold text-red-600">{error}</p>}
 
       <Reveal className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">

@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import Reveal from '../components/Reveal';
+import Seo from '../components/Seo';
+import { buildOrganizationSchema } from '../lib/seo';
 
 export default function Contact() {
   const contactImage = 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQWAXtj1bcmL5JbtSfHK5x2SZQrnlmJNugK7g&s'; // PON_AQUI_LA_RUTA_DE_LA_IMAGEN_DEL_LOCAL_O_DEL_EQUIPO
@@ -29,6 +31,13 @@ export default function Contact() {
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-background px-6 pb-16 pt-32">
+      <Seo
+        title="Contacto y Ubicación | Pawau Boutique & Spa"
+        description="Encuentra la ubicación, horarios, WhatsApp e Instagram de Pawau Boutique & Spa en Ibarra. Contáctanos para resolver dudas o pedir información."
+        path="/contacto"
+        image={contactImage}
+        schema={buildOrganizationSchema()}
+      />
       <main className="mx-auto w-full max-w-[1280px]">
         <Reveal as="section" className="mb-16">
           <h1 className="flex flex-wrap items-center gap-4 text-[48px] font-extrabold leading-[1.1] tracking-[-0.02em] text-on-surface">

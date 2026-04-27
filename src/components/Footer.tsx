@@ -1,4 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
+import { serviceSectionAnchors } from '../lib/services-content';
 
 export default function Footer() {
   const location = useLocation();
@@ -13,9 +14,9 @@ export default function Footer() {
   ];
 
   const serviceLinks = [
-    { label: 'Grooming Completo', to: '/servicios#GroomingPerros' },
-    { label: 'Baño Spa', to: '/servicios#SpaGatos' },
-    { label: 'Boutique', to: '/servicios#boutique' },
+    { label: 'Grooming Completo', to: `/servicios#${serviceSectionAnchors.dogs}` },
+    { label: 'Baño Spa', to: `/servicios#${serviceSectionAnchors.cats}` },
+    { label: 'Boutique', to: `/servicios#${serviceSectionAnchors.boutique}` },
   ];
 
   function getLinkClass(path: string) {

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Button from '../components/Button';
 import Input from '../components/Input';
 import Reveal from '../components/Reveal';
+import Seo from '../components/Seo';
 import { createAppointment, getAvailability, getServices } from '../lib/api';
 import {
   formatMoney,
@@ -11,6 +12,7 @@ import {
   type BookingFormState,
   type ServiceItem,
 } from '../lib/booking';
+import { buildOrganizationSchema } from '../lib/seo';
 
 function SelectField({
   label,
@@ -158,6 +160,13 @@ export default function Booking() {
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-background px-6 pb-16 pt-32">
+      <Seo
+        title="Agenda una Cita para tu Mascota | Pawau Boutique & Spa"
+        description="Agenda online una cita para grooming, baño spa o corte de uñas en Pawau Boutique & Spa. Revisa horarios disponibles y reserva en pocos pasos."
+        path="/agendar"
+        image={bookingSideImage}
+        schema={buildOrganizationSchema()}
+      />
       <main className="mx-auto w-full max-w-[1280px]">
         <Reveal as="section" className="mb-16 grid gap-10 lg:grid-cols-[1.02fr_0.98fr] lg:gap-16">
           <div>

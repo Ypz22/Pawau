@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ArrowLeft, LockKeyhole, ShieldCheck } from 'lucide-react';
+import Seo from '../../components/Seo';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { adminLogin } from '../../lib/api';
 
@@ -30,6 +31,12 @@ export default function AdminLogin() {
 
   return (
     <div className="min-h-screen bg-[linear-gradient(135deg,#fff8f6_0%,#ffe9e3_100%)] px-6 py-12">
+      <Seo
+        title="Acceso Administrativo | Pawau Boutique & Spa"
+        description="Acceso privado para la administración de citas de Pawau Boutique & Spa."
+        path="/admin/login"
+        noIndex
+      />
       <div className="mx-auto mb-6 max-w-6xl">
         <Link
           to="/"

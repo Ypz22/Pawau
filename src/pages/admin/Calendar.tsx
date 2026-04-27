@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import AdminLayout from '../../components/AdminLayout';
 import Reveal from '../../components/Reveal';
+import Seo from '../../components/Seo';
 import { getAdminAppointments } from '../../lib/api';
 import type { AdminAppointment } from '../../lib/admin';
 import { formatReadableDate, getMinBookingDate } from '../../lib/booking';
@@ -30,6 +31,12 @@ export default function AdminCalendar() {
 
   return (
     <AdminLayout title="Calendario de citas" subtitle="Consulta rápidamente qué reservas hay en una fecha específica y revisa los detalles del día.">
+      <Seo
+        title="Calendario Administrativo | Pawau Boutique & Spa"
+        description="Calendario privado para revisar las citas de Pawau Boutique & Spa."
+        path="/admin/calendario"
+        noIndex
+      />
       <Reveal className="rounded-[2rem] bg-white p-6 shadow-[0_15px_30px_rgba(255,91,26,0.06)]">
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
