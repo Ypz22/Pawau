@@ -13,6 +13,8 @@ async function fetchAppointments(date?: string, status?: AppointmentStatus | '')
   });
 }
 
+const PAGE_SIZE = 10;
+
 export default function AdminAppointments() {
   const [appointments, setAppointments] = useState<AdminAppointment[]>([]);
   const [statusFilter, setStatusFilter] = useState<AppointmentStatus | ''>('');
@@ -24,11 +26,28 @@ export default function AdminAppointments() {
   const [rescheduleTime, setRescheduleTime] = useState('');
   const [availableSlots, setAvailableSlots] = useState<string[]>([]);
   const [pendingAction, setPendingAction] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const activeAppointment = useMemo(
     () => appointments.find((appointment) => appointment.id === rescheduleId) ?? null,
     [appointments, rescheduleId]
   );
+
+  const totalPages = Math.max(1, Math.ceil(appointments.length / PAGE_SIZE));
+  const visiblePage = Math.min(currentPage, totalPages);
+
+  const paginatedAppointments = useMemo(() => {
+    const start = (visiblePage - 1) * PAGE_SIZE;
+    return appointments.slice(start, start + PAGE_SIZE);
+  }, [appointments, visiblePage]);
+
+  const paginationWindow = useMemo(() => {
+    const start = Math.max(1, visiblePage - 2);
+    const end = Math.min(totalPages, start + 4);
+    const adjustedStart = Math.max(1, end - 4);
+
+    return Array.from({ length: end - adjustedStart + 1 }, (_, index) => adjustedStart + index);
+  }, [visiblePage, totalPages]);
 
   useEffect(() => {
     let isActive = true;
@@ -43,6 +62,7 @@ export default function AdminAppointments() {
 
         setError('');
         setAppointments(response.appointments);
+        setCurrentPage(1);
       } catch {
         if (!isActive) {
           return;
@@ -189,7 +209,7 @@ export default function AdminAppointments() {
             No hay citas para esos filtros.
           </div>
         ) : (
-          appointments.map((appointment) => (
+          paginatedAppointments.map((appointment) => (
             <div key={appointment.id} className="rounded-[2rem] bg-white p-6 shadow-[0_15px_30px_rgba(255,91,26,0.06)]">
               <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
                 <div>
@@ -338,6 +358,52 @@ export default function AdminAppointments() {
           ))
         )}
       </Reveal>
+
+      {appointments.length > PAGE_SIZE && (
+        <Reveal className="mt-8 rounded-[2rem] bg-white p-5 shadow-[0_15px_30px_rgba(255,91,26,0.06)]" delay={0.08}>
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <p className="text-sm font-semibold text-on-surface-variant">
+              Mostrando {Math.min((visiblePage - 1) * PAGE_SIZE + 1, appointments.length)} a{' '}
+              {Math.min(visiblePage * PAGE_SIZE, appointments.length)} de {appointments.length} citas
+            </p>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                className="rounded-full border border-outline-variant bg-white px-4 py-2 text-sm font-bold text-on-surface transition-all hover:-translate-y-0.5 hover:border-primary-container hover:text-primary-container disabled:cursor-not-allowed disabled:opacity-50"
+                type="button"
+                disabled={visiblePage === 1}
+                onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+              >
+                Anterior
+              </button>
+
+              {paginationWindow.map((page) => (
+                <button
+                  key={page}
+                  className={`h-11 min-w-11 rounded-full px-4 text-sm font-bold transition-all ${
+                    page === visiblePage
+                      ? 'bg-[#FF5B1A] text-white shadow-[0_10px_20px_rgba(255,91,26,0.2)]'
+                      : 'border border-outline-variant bg-white text-on-surface hover:-translate-y-0.5 hover:border-primary-container hover:text-primary-container'
+                  }`}
+                  type="button"
+                  onClick={() => setCurrentPage(page)}
+                >
+                  {page}
+                </button>
+              ))}
+
+              <button
+                className="rounded-full border border-outline-variant bg-white px-4 py-2 text-sm font-bold text-on-surface transition-all hover:-translate-y-0.5 hover:border-primary-container hover:text-primary-container disabled:cursor-not-allowed disabled:opacity-50"
+                type="button"
+                disabled={visiblePage === totalPages}
+                onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+              >
+                Siguiente
+              </button>
+            </div>
+          </div>
+        </Reveal>
+      )}
     </AdminLayout>
   );
 }
