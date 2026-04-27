@@ -77,3 +77,17 @@ En Hostinger:
 
 - sube el contenido de `dist`
 - si usas hosting Apache, asegúrate de subir tambien el `.htaccess`
+
+## Hostinger con Docker
+
+Si en Hostinger despliegas con [Dockerfile](/Users/jeffersonyepez/PracticasProgramacion/Proyectos/PawauWebPage/Dockerfile:1), las variables `VITE_*` tienen que estar disponibles durante el `build`, no solo cuando el contenedor ya está corriendo.
+
+El `Dockerfile` ya acepta estos `build args`:
+
+```bash
+VITE_SUPABASE_URL
+VITE_SUPABASE_ANON_KEY
+VITE_SUPABASE_APPOINTMENTS_TABLE
+```
+
+Si Hostinger solo te deja poner variables de runtime y no de build, la imagen se compila sin la configuración de Supabase y la página no carga correctamente.
