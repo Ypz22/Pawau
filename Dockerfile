@@ -21,7 +21,6 @@ RUN npm ci --omit=dev && npm cache clean --force
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/server ./server
 COPY --from=build /app/supabase ./supabase
-COPY --from=build /app/.env.example ./.env.example
 
 RUN chown -R node:node /app
 
