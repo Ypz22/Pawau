@@ -1,4 +1,4 @@
-FROM node:22-bookworm-slim AS base
+FROM node:20-bookworm AS base
 WORKDIR /app
 
 FROM base AS deps
@@ -9,14 +9,14 @@ FROM deps AS build
 COPY . .
 RUN npm run build
 
-FROM node:22-bookworm-slim AS production
+FROM node:20-bookworm AS production
 WORKDIR /app
 
 ENV NODE_ENV=production
 ENV PORT=3001
 
 COPY package.json package-lock.json ./
-RUN npm ci --omit=dev && npm cache clean --force
+RUN npm ci --omit=dev --build-from-source && npm rebuild sqlite3 --build-from-source && npm cache clean --force
 
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/server ./server
@@ -27,4 +27,4 @@ USER node
 
 EXPOSE 3001
 
-CMD ["npm", "run", "start"]
+CMD ["npm", "start"]
