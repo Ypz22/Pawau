@@ -25,8 +25,8 @@ This makes the project more than a simple landing page. It includes real booking
 ### Admin panel
 
 - Login URL: `https://pawau.vercel.app/admin/login`
-- Admin email: `admin@pawau.com`
-- Admin password: `admin1234`
+- Admin email: `pawau@admin.com`
+- Admin password: `Admin1234`
 
 Note: the repository includes the admin email used in the SQL setup, but it does not store a real password.
 
