@@ -1,34 +1,49 @@
 # Pawau Boutique & Spa
 
-Producción: [pawau.vercel.app](https://pawau.vercel.app/)
+Production: [pawau.vercel.app](https://pawau.vercel.app/)
 
-Sitio web para una boutique y spa de mascotas, diseñado para presentar servicios, facilitar reservas en línea y ofrecer un panel administrativo para gestionar citas.
+Pawau Boutique & Spa is a pet care website built to showcase services, accept online bookings, and provide an admin panel for appointment management.
 
-El proyecto combina una experiencia visual orientada a clientes con un flujo administrativo basado en Supabase, sin backend propio tradicional.
+The project combines a customer-facing marketing experience with a Supabase-powered administrative workflow, without relying on a traditional custom backend.
 
-## Resumen
+## Overview
 
-Pawau fue construido para cubrir dos necesidades principales:
+Pawau was designed to cover two core needs:
 
-- una experiencia pública atractiva para mostrar servicios, contacto y reservas
-- una experiencia privada para gestionar citas, disponibilidad y seguimiento operativo
+- a polished public experience for services, contact, and bookings
+- a private admin experience for scheduling, availability, and appointment operations
 
-La aplicación está enfocada en un negocio real, no solo en una landing page, por lo que incluye lógica de disponibilidad, autenticación administrativa, SEO y despliegue preparado para distintos entornos.
+This makes the project more than a simple landing page. It includes real booking logic, protected admin access, SEO support, and deployment flexibility.
 
-## Características principales
+## Access
 
-- Página de inicio con enfoque comercial y visual
-- Catálogo de servicios para perros, gatos y boutique
-- Reserva de citas en línea con horarios disponibles
-- Validación de cupos según duración del servicio
-- Panel administrativo con login protegido
-- Dashboard con resumen de citas
-- Listado administrativo con filtros, estados y reprogramación
-- SEO configurado para páginas públicas
-- Sitemap generado automáticamente antes del build
-- Soporte para despliegue en Vercel, Apache y Docker + Nginx
+### Public website
 
-## Stack tecnológico
+- URL: `https://pawau.vercel.app/`
+- Login required: `No`
+
+### Admin panel
+
+- Login URL: `https://pawau.vercel.app/admin/login`
+- Admin email: `admin@pawau.com`
+- Admin password: `admin1234`
+
+Note: the repository includes the admin email used in the SQL setup, but it does not store a real password.
+
+## Main Features
+
+- Marketing-oriented home page
+- Services catalog for dogs, cats, and boutique products
+- Online appointment booking with available time slots
+- Availability validation based on service duration
+- Protected admin login with Supabase Auth
+- Admin dashboard with appointment summary
+- Admin appointment listing with filters, status updates, and rescheduling
+- SEO-ready public pages
+- Automatic sitemap generation before build
+- Deployment support for Vercel, Apache hosting, and Docker + Nginx
+
+## Tech Stack
 
 ### Frontend
 
@@ -40,56 +55,56 @@ La aplicación está enfocada en un negocio real, no solo en una landing page, p
 - Motion
 - Lucide React
 
-### Backend y datos
+### Data and Authentication
 
 - Supabase Auth
 - Supabase PostgreSQL
 - Row Level Security (RLS)
-- RPC de Supabase para disponibilidad pública
+- Supabase RPC for public availability queries
 
-### Infraestructura
+### Infrastructure
 
 - Vercel
 - Docker
 - Nginx
 
-## Módulos del proyecto
+## Project Modules
 
-### Público
+### Public
 
-- `Home`: portada principal con enfoque de marca
-- `Services`: catálogo de servicios y boutique
-- `Booking`: reserva de citas con control de disponibilidad
-- `Contact`: contacto comercial
+- `Home`: main branded landing page
+- `Services`: service and boutique catalog
+- `Booking`: online appointment booking flow
+- `Contact`: customer contact section
 
-### Privado
+### Private
 
-- `Admin Login`: acceso del administrador
-- `Admin Dashboard`: resumen general de citas
-- `Admin Appointments`: listado, filtros, estados y reprogramación
-- `Admin Calendar`: visualización administrativa de reservas
+- `Admin Login`: protected administrator access
+- `Admin Dashboard`: appointment overview
+- `Admin Appointments`: filtering, status management, and rescheduling
+- `Admin Calendar`: calendar-based appointment view
 
-## Arquitectura
+## Architecture
 
-La aplicación funciona directamente contra Supabase desde el frontend:
+The application communicates directly with Supabase from the frontend:
 
-- Supabase Auth maneja el acceso administrativo
-- PostgreSQL guarda citas y datos relacionados
-- RLS protege el acceso a la información
-- una RPC pública expone la disponibilidad necesaria para el formulario de reservas
+- Supabase Auth handles admin authentication
+- PostgreSQL stores appointments and related booking data
+- RLS protects access to sensitive records
+- a public RPC provides the availability required by the booking form
 
-Esta decisión simplifica la infraestructura y mantiene el proyecto ligero, manteniendo al mismo tiempo una separación clara entre la experiencia pública y la gestión interna.
+This approach keeps the infrastructure lightweight while maintaining a clean separation between the public booking experience and the internal admin workflow.
 
-## Estructura del proyecto
+## Project Structure
 
 ```text
 src
-├── components        # Componentes reutilizables de UI
-├── components/admin  # Componentes del panel administrativo
-├── lib               # Lógica de negocio, API, SEO y configuración
-├── pages             # Vistas públicas y privadas
-├── pages/admin       # Pantallas del panel administrativo
-└── index.css         # Estilos globales
+├── components        # Reusable UI components
+├── components/admin  # Admin panel UI components
+├── lib               # Business logic, API helpers, SEO, and configuration
+├── pages             # Public and private views
+├── pages/admin       # Admin screens
+└── index.css         # Global styles
 
 supabase
 ├── appointments_schema.sql
@@ -99,9 +114,9 @@ scripts
 └── generate-sitemap.mjs
 ```
 
-## Variables de entorno
+## Environment Variables
 
-Crea un archivo `.env` a partir de `.env.example`:
+Create a `.env` file based on `.env.example`:
 
 ```env
 VITE_SUPABASE_URL=...
@@ -109,90 +124,95 @@ VITE_SUPABASE_ANON_KEY=...
 VITE_SUPABASE_APPOINTMENTS_TABLE=appointments
 ```
 
-Importante:
+Important:
 
-- usa la `anon key`, no `service_role`
-- este proyecto depende de políticas RLS bien configuradas
-- si las variables no están disponibles durante el build, el frontend no podrá conectarse correctamente
+- use the `anon` key, not `service_role`
+- this project depends on properly configured RLS policies
+- if these variables are missing at build time, the app will not connect correctly
 
-## Configuración de Supabase
+## Supabase Setup
 
-### 1. Crear el proyecto
+### 1. Create the project
 
-Crea un proyecto en Supabase y obtén:
+Create a Supabase project and obtain:
 
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_ANON_KEY`
 
-### 2. Crear la estructura de datos
+### 2. Create the database structure
 
-Ejecuta el script:
+Run:
 
 - [supabase/appointments_schema.sql](/Users/jeffersonyepez/PracticasProgramacion/Proyectos/PawauWebPage/supabase/appointments_schema.sql:1)
 
-### 3. Crear el usuario administrador
+### 3. Create the admin user
 
-Desde `Authentication > Users`, crea el usuario administrador manualmente.
+In `Authentication > Users`, create the admin user manually.
 
-### 4. Registrar permisos administrativos
+Recommended setup based on the project:
 
-Ejecuta:
+- Email: `admin@pawau.com`
+- Password: choose your own secure password
+
+### 4. Grant admin permissions
+
+Run:
 
 - [supabase/admin_setup.sql](/Users/jeffersonyepez/PracticasProgramacion/Proyectos/PawauWebPage/supabase/admin_setup.sql:1)
 
-Antes de hacerlo, ajusta el correo del administrador en el SQL para que coincida con el usuario creado.
+Before running it, update the email in the SQL if you decide to use a different admin account.
 
-## Desarrollo local
+## Local Development
 
-### Instalar dependencias
+### Install dependencies
 
 ```bash
 npm install
 ```
 
-### Ejecutar en desarrollo
+### Start the development server
 
 ```bash
 npm run dev
 ```
 
-### Build local
+### Build locally
 
 ```bash
 npm run build
 ```
 
-### Previsualizar build
+### Preview the production build
 
 ```bash
 npm run preview
 ```
 
-## Scripts disponibles
+## Available Scripts
 
 ```bash
-npm run dev        # Servidor de desarrollo
-npm run build      # Build de producción
-npm run preview    # Preview del build
-npm run lint       # ESLint
+npm run dev        # Start development server
+npm run build      # Build for production
+npm run preview    # Preview production build
+npm run lint       # Run ESLint
 ```
 
-Nota: antes de `build`, el proyecto genera automáticamente el sitemap con `scripts/generate-sitemap.mjs`.
+Note: before `build`, the project automatically generates the sitemap using `scripts/generate-sitemap.mjs`.
 
-## Despliegue en Vercel
+## Deployment on Vercel
 
-Este proyecto ya incluye:
+The project already includes:
 
-- [vercel.json](/Users/jeffersonyepez/PracticasProgramacion/Proyectos/PawauWebPage/vercel.json:1) para rewrites de rutas SPA
-- SEO y archivos públicos listos para producción
+- [vercel.json](/Users/jeffersonyepez/PracticasProgramacion/Proyectos/PawauWebPage/vercel.json:1) for SPA rewrites
+- production-ready public files and SEO configuration
 
-Configuración recomendada:
+Recommended setup:
 
 - Framework preset: `Vite`
 - Build command: `npm run build`
 - Output directory: `dist`
 
-Variables requeridas en Vercel:
+Required variables in Vercel:
 
 ```env
 VITE_SUPABASE_URL=...
@@ -200,46 +220,46 @@ VITE_SUPABASE_ANON_KEY=...
 VITE_SUPABASE_APPOINTMENTS_TABLE=appointments
 ```
 
-## Despliegue en Apache o Hostinger
+## Deployment on Apache or Hostinger
 
-Si haces un despliegue estático tradicional:
+For a traditional static deployment:
 
-- sube el contenido de `dist`
-- incluye también `public/.htaccess`
+- upload the contents of `dist`
+- include `public/.htaccess`
 
-Archivo preparado:
+Prepared file:
 
 - [public/.htaccess](/Users/jeffersonyepez/PracticasProgramacion/Proyectos/PawauWebPage/public/.htaccess:1)
 
-Esto es importante para que rutas como `/servicios`, `/agendar` o `/admin/login` funcionen correctamente después de recargar.
+This is necessary so routes such as `/services`, `/booking`, or `/admin/login` continue to work after a full page refresh.
 
-## Producción con Docker y Nginx
+## Production with Docker and Nginx
 
-La imagen de producción compila la app con Vite y luego la sirve con `nginx`.
+The production image builds the app with Vite and then serves it through `nginx`.
 
-Archivos clave:
+Key files:
 
 - [Dockerfile](/Users/jeffersonyepez/PracticasProgramacion/Proyectos/PawauWebPage/Dockerfile:1)
 - [nginx/nginx.conf](/Users/jeffersonyepez/PracticasProgramacion/Proyectos/PawauWebPage/nginx/nginx.conf:1)
 - [docker-compose.prod.yml](/Users/jeffersonyepez/PracticasProgramacion/Proyectos/PawauWebPage/docker-compose.prod.yml:1)
 
-Para levantar producción local:
+To run the production stack locally:
 
 ```bash
 docker compose -f docker-compose.prod.yml up --build
 ```
 
-La aplicación quedará disponible en:
+The app will be available at:
 
 ```bash
 http://localhost
 ```
 
-## Nota importante para Hostinger con Docker
+## Important Note for Hostinger with Docker
 
-Si despliegas usando Docker en Hostinger, las variables `VITE_*` deben estar disponibles durante el `build`, no solo en runtime.
+If you deploy with Docker on Hostinger, the `VITE_*` variables must be available during the image build, not only at container runtime.
 
-El `Dockerfile` ya acepta estos `build args`:
+The `Dockerfile` already accepts these build args:
 
 ```env
 VITE_SUPABASE_URL
@@ -247,31 +267,31 @@ VITE_SUPABASE_ANON_KEY
 VITE_SUPABASE_APPOINTMENTS_TABLE
 ```
 
-Si el proveedor solo permite variables cuando el contenedor ya está ejecutándose, la aplicación puede compilarse sin configuración y romperse en producción.
+If your hosting provider only injects variables after the container starts, the application may build without configuration and fail in production.
 
-## Solución de problemas comunes
+## Common Issues
 
-Si la app no carga correctamente en producción, normalmente el problema está en uno de estos puntos:
+If the app does not load correctly in production, the issue is usually one of these:
 
-1. faltan variables de entorno en el hosting
-2. no están configurados los rewrites para rutas SPA
-3. Supabase no tiene las tablas o políticas esperadas
-4. el usuario administrador no fue creado o no tiene el rol esperado
+1. missing environment variables in the hosting platform
+2. missing SPA rewrites
+3. missing Supabase tables or policies
+4. admin user exists but does not have the expected role
 
-## Qué aporta este proyecto
+## Why This Project Matters
 
-Pawau no es solo una página informativa. Destaca porque combina:
+Pawau is not just a marketing site. It combines:
 
-- marketing y presentación visual
-- lógica real de negocio para reservas
-- autenticación y gestión administrativa
-- SEO técnico para visibilidad pública
-- despliegue flexible según el entorno
+- visual presentation and branding
+- real booking logic
+- authentication and admin operations
+- technical SEO for public discoverability
+- flexible deployment options
 
-## Autor
+## Author
 
 Jefferson Yepez
 
-## Licencia
+## License
 
-Proyecto privado.
+Private project.
