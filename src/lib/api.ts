@@ -1,17 +1,26 @@
 import type { User } from '@supabase/supabase-js';
 import type { AdminAppointment, AdminOverview } from './admin';
 import { isAdminUser, mapAdminUser } from './admin';
+import { AppError } from './errors';
 import {
   bookingSettings,
+  getServiceById,
   serviceCatalog,
   type Appointment,
   type AppointmentStatus,
   type BookingFormState,
   type ServiceItem,
+  validateBookingForm,
 } from './booking';
 import { supabase } from './supabase';
 
 const APPOINTMENTS_TABLE = import.meta.env.VITE_SUPABASE_APPOINTMENTS_TABLE || 'appointments';
+
+function assertNoError(error: { message: string } | null) {
+  if (error) {
+    throw new AppError(error.message);
+  }
+}
 
 function toDateTimeParts(date: string, time: string) {
   const [year, month, day] = date.split('-').map(Number);
@@ -44,6 +53,22 @@ function overlaps(startA: Date, endA: Date, startB: Date, endB: Date) {
   return startA < endB && startB < endA;
 }
 
+function hasSlotCapacity(existingAppointments: Appointment[], slotStart: Date, slotEnd: Date) {
+  let conflicts = 0;
+
+  for (const appointment of existingAppointments) {
+    if (overlaps(slotStart, slotEnd, new Date(appointment.start_at), new Date(appointment.end_at))) {
+      conflicts += 1;
+
+      if (conflicts >= bookingSettings.maxAppointmentsPerSlot) {
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
 function normalizeAppointment(appointment: Appointment) {
   return {
     ...appointment,
@@ -53,7 +78,7 @@ function normalizeAppointment(appointment: Appointment) {
 
 function serializeAppointmentWithService(appointment: Appointment): AdminAppointment {
   const normalized = normalizeAppointment(appointment);
-  const service = serviceCatalog.find((item) => item.id === normalized.service_id);
+  const service = getServiceById(normalized.service_id);
 
   return {
     ...normalized,
@@ -64,26 +89,31 @@ function serializeAppointmentWithService(appointment: Appointment): AdminAppoint
 }
 
 function getStatusSummary(appointments: Appointment[]) {
-  return {
-    pending: appointments.filter((appointment) => appointment.status === 'pending').length,
-    confirmed: appointments.filter((appointment) => appointment.status === 'confirmed').length,
-    cancelled: appointments.filter((appointment) => appointment.status === 'cancelled').length,
-    completed: appointments.filter((appointment) => appointment.status === 'completed').length,
-    total: appointments.length,
-  };
+  return appointments.reduce<Record<AppointmentStatus | 'total', number>>(
+    (summary, appointment) => {
+      summary[appointment.status] += 1;
+      summary.total += 1;
+      return summary;
+    },
+    {
+      pending: 0,
+      confirmed: 0,
+      cancelled: 0,
+      completed: 0,
+      total: 0,
+    }
+  );
 }
 
 async function requireAdminUser() {
   const { data, error } = await supabase.auth.getUser();
 
-  if (error) {
-    throw { message: error.message };
-  }
+  assertNoError(error);
 
   const user = data.user;
 
   if (!isAdminUser(user)) {
-    throw { message: 'No autorizado.' };
+    throw new AppError('No autorizado.');
   }
 
   return user;
@@ -103,9 +133,7 @@ async function queryAppointments(filters?: { date?: string; status?: Appointment
 
   const { data, error } = await query;
 
-  if (error) {
-    throw { message: error.message };
-  }
+  assertNoError(error);
 
   return (data ?? []).map((appointment: Appointment) => normalizeAppointment(appointment));
 }
@@ -115,9 +143,7 @@ async function getPublicActiveAppointmentsForDate(date: string) {
     target_date: date,
   });
 
-  if (error) {
-    throw { message: error.message };
-  }
+  assertNoError(error);
 
   return (data ?? []).map((appointment: Appointment) => normalizeAppointment(appointment));
 }
@@ -152,11 +178,8 @@ function buildAvailableSlots(existingAppointments: Appointment[], date: string, 
     slotStart = addMinutes(slotStart, bookingSettings.slotIntervalMinutes)
   ) {
     const slotEnd = addMinutes(slotStart, service.duration);
-    const conflicts = existingAppointments.filter((appointment) =>
-      overlaps(slotStart, slotEnd, new Date(appointment.start_at), new Date(appointment.end_at))
-    );
 
-    if (slotStart > now && conflicts.length < bookingSettings.maxAppointmentsPerSlot) {
+    if (slotStart > now && hasSlotCapacity(existingAppointments, slotStart, slotEnd)) {
       slots.push(formatTime(slotStart));
     }
   }
@@ -175,10 +198,10 @@ export async function getServices() {
 }
 
 export async function getAvailability(date: string, serviceId: string, options?: { excludeAppointmentId?: number }) {
-  const service = serviceCatalog.find((item) => item.id === serviceId);
+  const service = getServiceById(serviceId);
 
   if (!service) {
-    throw { message: 'Servicio inválido.' };
+    throw new AppError('Servicio inválido.');
   }
 
   const appointments = await getAppointmentsForAvailability(date, options?.excludeAppointmentId);
@@ -189,17 +212,25 @@ export async function getAvailability(date: string, serviceId: string, options?:
 }
 
 export async function createAppointment(payload: BookingFormState) {
-  const service = serviceCatalog.find((item) => item.id === payload.serviceId);
+  const validationErrors = validateBookingForm(payload);
+
+  if (Object.keys(validationErrors).length > 0) {
+    throw new AppError('Revisa los campos marcados para continuar.', {
+      errors: validationErrors,
+    });
+  }
+
+  const service = getServiceById(payload.serviceId);
 
   if (!service) {
-    throw { message: 'El servicio seleccionado no existe.' };
+    throw new AppError('El servicio seleccionado no existe.');
   }
 
   const appointments = await getPublicActiveAppointmentsForDate(payload.date);
   const availableSlots = buildAvailableSlots(appointments, payload.date, service);
 
   if (!availableSlots.includes(payload.time)) {
-    throw { message: 'La hora seleccionada ya no esta disponible. Elige otra opcion.' };
+    throw new AppError('La hora seleccionada ya no esta disponible. Elige otra opcion.');
   }
 
   const startAt = toIso(payload.date, payload.time);
@@ -222,9 +253,7 @@ export async function createAppointment(payload: BookingFormState) {
 
   const { error } = await supabase.from(APPOINTMENTS_TABLE).insert(insertPayload);
 
-  if (error) {
-    throw { message: error.message };
-  }
+  assertNoError(error);
 
   return {
     message: 'Cita creada correctamente.',
@@ -242,15 +271,13 @@ export async function adminLogin(email: string, password: string) {
     password,
   });
 
-  if (error) {
-    throw { message: error.message };
-  }
+  assertNoError(error);
 
   const user = data.user;
 
   if (!isAdminUser(user)) {
     await supabase.auth.signOut();
-    throw { message: 'Tu usuario no tiene permisos de administrador.' };
+    throw new AppError('Tu usuario no tiene permisos de administrador.');
   }
 
   return {
@@ -269,9 +296,7 @@ export async function adminMe() {
 export async function adminLogout() {
   const { error } = await supabase.auth.signOut();
 
-  if (error) {
-    throw { message: error.message };
-  }
+  assertNoError(error);
 
   return { ok: true };
 }
@@ -313,9 +338,7 @@ export async function updateAdminAppointmentStatus(id: number, status: Appointme
     .select('*')
     .single();
 
-  if (error) {
-    throw { message: error.message };
-  }
+  assertNoError(error);
 
   return {
     appointment: serializeAppointmentWithService(data as Appointment),
@@ -325,6 +348,10 @@ export async function updateAdminAppointmentStatus(id: number, status: Appointme
 
 export async function rescheduleAdminAppointment(id: number, date: string, time: string) {
   await requireAdminUser();
+
+  if (!date || !time) {
+    throw new AppError('Selecciona una fecha y una hora válidas.');
+  }
 
   const appointments = await queryAppointments({
     date,
@@ -338,21 +365,19 @@ export async function rescheduleAdminAppointment(id: number, date: string, time:
     .eq('id', id)
     .single();
 
-  if (currentAppointmentError) {
-    throw { message: currentAppointmentError.message };
-  }
+  assertNoError(currentAppointmentError);
 
   const appointment = normalizeAppointment(currentAppointment as Appointment);
-  const service = serviceCatalog.find((item) => item.id === appointment.service_id);
+  const service = getServiceById(appointment.service_id);
 
   if (!service) {
-    throw { message: 'El servicio de la cita no es valido.' };
+    throw new AppError('El servicio de la cita no es valido.');
   }
 
   const availableSlots = buildAvailableSlots(appointments, date, service);
 
   if (!availableSlots.includes(time)) {
-    throw { message: 'Ese horario no esta disponible para reprogramar.' };
+    throw new AppError('Ese horario no esta disponible para reprogramar.');
   }
 
   const startAt = toIso(date, time);
@@ -371,9 +396,7 @@ export async function rescheduleAdminAppointment(id: number, date: string, time:
     .select('*')
     .single();
 
-  if (error) {
-    throw { message: error.message };
-  }
+  assertNoError(error);
 
   return {
     appointment: serializeAppointmentWithService(data as Appointment),
@@ -384,9 +407,7 @@ export async function rescheduleAdminAppointment(id: number, date: string, time:
 export async function getCurrentUser() {
   const { data, error } = await supabase.auth.getUser();
 
-  if (error) {
-    throw { message: error.message };
-  }
+  assertNoError(error);
 
   return data.user as User | null;
 }

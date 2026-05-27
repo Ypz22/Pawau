@@ -1,17 +1,37 @@
+import { lazy, Suspense, type ReactNode } from 'react';
 import { AnimatePresence } from 'motion/react';
 import { BrowserRouter, Navigate, Routes, Route, useLocation } from 'react-router-dom';
 import AdminRoute from './components/AdminRoute';
 import Layout from './components/Layout';
 import PageTransition from './components/PageTransition';
 import ScrollToTop from './components/ScrollToTop';
-import Home from './pages/Home';
-import Booking from './pages/Booking';
-import Contact from './pages/Contact';
-import Services from './pages/Services';
-import AdminAppointments from './pages/admin/Appointments';
-import AdminCalendar from './pages/admin/Calendar';
-import AdminDashboard from './pages/admin/Dashboard';
-import AdminLogin from './pages/admin/Login';
+
+const Home = lazy(() => import('./pages/Home'));
+const Booking = lazy(() => import('./pages/Booking'));
+const Contact = lazy(() => import('./pages/Contact'));
+const Services = lazy(() => import('./pages/Services'));
+const AdminAppointments = lazy(() => import('./pages/admin/Appointments'));
+const AdminCalendar = lazy(() => import('./pages/admin/Calendar'));
+const AdminDashboard = lazy(() => import('./pages/admin/Dashboard'));
+const AdminLogin = lazy(() => import('./pages/admin/Login'));
+
+function RouteFallback() {
+  return (
+    <div className="flex min-h-[40vh] items-center justify-center px-6">
+      <div className="rounded-full bg-surface-container px-5 py-3 text-sm font-bold uppercase tracking-[0.08em] text-on-surface-variant">
+        Cargando...
+      </div>
+    </div>
+  );
+}
+
+function renderPage(page: ReactNode) {
+  return (
+    <Suspense fallback={<RouteFallback />}>
+      <PageTransition>{page}</PageTransition>
+    </Suspense>
+  );
+}
 
 function AnimatedRoutes() {
   const location = useLocation();
@@ -19,17 +39,17 @@ function AnimatedRoutes() {
   return (
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
-        <Route path="/" element={<PageTransition><Home /></PageTransition>} />
-        <Route path="/servicios" element={<PageTransition><Services /></PageTransition>} />
-        <Route path="/agendar" element={<PageTransition><Booking /></PageTransition>} />
-        <Route path="/contacto" element={<PageTransition><Contact /></PageTransition>} />
-        <Route path="/admin/login" element={<PageTransition><AdminLogin /></PageTransition>} />
+        <Route path="/" element={renderPage(<Home />)} />
+        <Route path="/servicios" element={renderPage(<Services />)} />
+        <Route path="/agendar" element={renderPage(<Booking />)} />
+        <Route path="/contacto" element={renderPage(<Contact />)} />
+        <Route path="/admin/login" element={renderPage(<AdminLogin />)} />
         <Route path="/dashboard" element={<Navigate to="/admin/dashboard" replace />} />
         <Route
           path="/admin/dashboard"
           element={
             <AdminRoute>
-              <PageTransition><AdminDashboard /></PageTransition>
+              {renderPage(<AdminDashboard />)}
             </AdminRoute>
           }
         />
@@ -37,7 +57,7 @@ function AnimatedRoutes() {
           path="/admin/citas"
           element={
             <AdminRoute>
-              <PageTransition><AdminAppointments /></PageTransition>
+              {renderPage(<AdminAppointments />)}
             </AdminRoute>
           }
         />
@@ -45,7 +65,7 @@ function AnimatedRoutes() {
           path="/admin/calendario"
           element={
             <AdminRoute>
-              <PageTransition><AdminCalendar /></PageTransition>
+              {renderPage(<AdminCalendar />)}
             </AdminRoute>
           }
         />

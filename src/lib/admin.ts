@@ -17,7 +17,7 @@ export interface AdminAppointment extends Appointment {
   service_price: number | null;
 }
 
-export function isAdminUser(user: User | null | undefined) {
+export function isAdminUser(user: User | null | undefined): user is User {
   return user?.app_metadata?.role === 'admin';
 }
 

@@ -4,11 +4,14 @@ import Input from '../components/Input';
 import Reveal from '../components/Reveal';
 import Seo from '../components/Seo';
 import { createAppointment, getAvailability, getServices } from '../lib/api';
+import { toErrorDetails } from '../lib/errors';
 import {
   formatMoney,
   formatReadableDate,
   getMinBookingDate,
   initialBookingForm,
+  type BookingFieldErrors,
+  validateBookingForm,
   type BookingFormState,
   type ServiceItem,
 } from '../lib/booking';
@@ -105,7 +108,7 @@ export default function Booking() {
   const [form, setForm] = useState<BookingFormState>(initialBookingForm);
   const [services, setServices] = useState<ServiceItem[]>([]);
   const [slots, setSlots] = useState<string[]>([]);
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [errors, setErrors] = useState<BookingFieldErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingSlots, setIsLoadingSlots] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
@@ -122,21 +125,46 @@ export default function Booking() {
     () => services.find((service) => service.id === form.serviceId),
     [form.serviceId, services]
   );
+  const serviceOptions = useMemo(
+    () =>
+      services.map((service) => ({
+        value: service.id,
+        label: `${service.name} · ${service.duration} min`,
+      })),
+    [services]
+  );
 
   useEffect(() => {
+    let isActive = true;
+
     async function loadInitialData() {
       try {
         const servicesResponse = await getServices();
+
+        if (!isActive) {
+          return;
+        }
+
         setServices(servicesResponse.services);
-      } catch {
-        setFormMessage('No pudimos cargar los horarios en este momento. Intenta nuevamente en unos minutos.');
+      } catch (error) {
+        if (!isActive) {
+          return;
+        }
+
+        setFormMessage(toErrorDetails(error, 'No pudimos cargar los horarios en este momento. Intenta nuevamente en unos minutos.').message);
       }
     }
 
     void loadInitialData();
+
+    return () => {
+      isActive = false;
+    };
   }, []);
 
   useEffect(() => {
+    let isActive = true;
+
     async function loadSlots() {
       if (!form.date || !form.serviceId) {
         setSlots([]);
@@ -149,31 +177,47 @@ export default function Booking() {
 
       try {
         const response = await getAvailability(form.date, form.serviceId);
-        setSlots(response.slots);
 
-        if (!response.slots.includes(form.time)) {
-          setForm((current) => ({ ...current, time: '' }));
+        if (!isActive) {
+          return;
         }
-      } catch {
+
+        setSlots(response.slots);
+        setForm((current) => (response.slots.includes(current.time) ? current : { ...current, time: '' }));
+      } catch (error) {
+        if (!isActive) {
+          return;
+        }
+
         setSlots([]);
-        setFormMessage('No pudimos consultar la disponibilidad para esa fecha.');
+        setFormMessage(toErrorDetails(error, 'No pudimos consultar la disponibilidad para esa fecha.').message);
       } finally {
-        setIsLoadingSlots(false);
+        if (isActive) {
+          setIsLoadingSlots(false);
+        }
       }
     }
 
     void loadSlots();
-  }, [form.date, form.serviceId, form.time]);
+
+    return () => {
+      isActive = false;
+    };
+  }, [form.date, form.serviceId]);
 
   function updateField<K extends keyof BookingFormState>(field: K, value: BookingFormState[K]) {
-    setForm((current) => ({ ...current, [field]: value }));
-    setErrors((current) => ({ ...current, [field]: '' }));
+    setForm((current) => ({
+      ...current,
+      [field]: value,
+      ...(field === 'date' || field === 'serviceId' ? { time: '' } : {}),
+    }));
+    setErrors((current) => ({
+      ...current,
+      [field]: '',
+      ...(field === 'date' || field === 'serviceId' ? { time: '' } : {}),
+    }));
     setSuccessMessage('');
     setConfirmedBooking(null);
-
-    if (field === 'date' || field === 'serviceId') {
-      setForm((current) => ({ ...current, time: '' }));
-    }
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -181,6 +225,15 @@ export default function Booking() {
     setIsSubmitting(true);
     setFormMessage('');
     setSuccessMessage('');
+
+    const validationErrors = validateBookingForm(form);
+
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      setFormMessage('Revisa los campos marcados para continuar.');
+      setIsSubmitting(false);
+      return;
+    }
 
     try {
       const response = await createAppointment(form);
@@ -198,8 +251,8 @@ export default function Booking() {
       setErrors({});
       setSlots([]);
     } catch (error) {
-      const payload = error as { message?: string; errors?: Record<string, string> };
-      setFormMessage(payload.message ?? 'No pudimos registrar tu cita.');
+      const payload = toErrorDetails(error, 'No pudimos registrar tu cita.');
+      setFormMessage(payload.message);
 
       if (payload.errors) {
         setErrors(payload.errors);
@@ -334,10 +387,7 @@ export default function Booking() {
                   value={form.serviceId}
                   onChange={(value) => updateField('serviceId', value)}
                   error={errors.serviceId}
-                  options={services.map((service) => ({
-                    value: service.id,
-                    label: `${service.name} · ${service.duration} min`,
-                  }))}
+                  options={serviceOptions}
                 />
               </div>
 

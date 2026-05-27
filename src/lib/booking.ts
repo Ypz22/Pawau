@@ -70,6 +70,8 @@ export interface BookingFormState {
   notes: string;
 }
 
+export type BookingFieldErrors = Partial<Record<keyof BookingFormState, string>>;
+
 export const initialBookingForm: BookingFormState = {
   ownerName: '',
   ownerPhone: '',
@@ -95,6 +97,12 @@ export const petTypeLabelMap: Record<PetType, string> = {
   otro: 'Otro',
 };
 
+const serviceCatalogById = new Map(serviceCatalog.map((service) => [service.id, service]));
+
+export function getServiceById(serviceId: string) {
+  return serviceCatalogById.get(serviceId);
+}
+
 export function formatMoney(value: number) {
   return new Intl.NumberFormat('es-EC', {
     style: 'currency',
@@ -114,4 +122,57 @@ export function formatReadableDate(date: string) {
 
 export function getMinBookingDate() {
   return new Date().toISOString().split('T')[0];
+}
+
+function isValidEmail(value: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+function isValidPhone(value: string) {
+  const normalized = value.replace(/\D/g, '');
+  return normalized.length >= 7;
+}
+
+export function validateBookingForm(form: BookingFormState): BookingFieldErrors {
+  const errors: BookingFieldErrors = {};
+
+  if (form.ownerName.trim().length < 2) {
+    errors.ownerName = 'Ingresa tu nombre completo.';
+  }
+
+  if (!isValidPhone(form.ownerPhone.trim())) {
+    errors.ownerPhone = 'Ingresa un teléfono válido.';
+  }
+
+  if (!isValidEmail(form.ownerEmail.trim())) {
+    errors.ownerEmail = 'Ingresa un correo válido.';
+  }
+
+  if (form.petName.trim().length < 2) {
+    errors.petName = 'Ingresa el nombre de tu mascota.';
+  }
+
+  if (!form.petType) {
+    errors.petType = 'Selecciona el tipo de mascota.';
+  }
+
+  if (!form.serviceId) {
+    errors.serviceId = 'Selecciona un servicio.';
+  } else if (!getServiceById(form.serviceId)) {
+    errors.serviceId = 'El servicio seleccionado no existe.';
+  }
+
+  if (!form.date) {
+    errors.date = 'Selecciona una fecha.';
+  } else if (form.date < getMinBookingDate()) {
+    errors.date = 'Selecciona una fecha válida.';
+  } else if (bookingSettings.closedWeekdays.includes(new Date(`${form.date}T00:00:00`).getDay())) {
+    errors.date = 'No atendemos en la fecha seleccionada.';
+  }
+
+  if (!form.time) {
+    errors.time = 'Selecciona un horario disponible.';
+  }
+
+  return errors;
 }

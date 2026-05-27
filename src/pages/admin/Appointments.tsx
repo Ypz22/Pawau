@@ -7,6 +7,7 @@ import Reveal from '../../components/Reveal';
 import Seo from '../../components/Seo';
 import { getAdminAppointments, getAvailability, rescheduleAdminAppointment, updateAdminAppointmentStatus } from '../../lib/api';
 import type { AdminAppointment } from '../../lib/admin';
+import { toErrorDetails } from '../../lib/errors';
 import { type AppointmentStatus } from '../../lib/booking';
 
 async function fetchAppointments(date?: string, status?: AppointmentStatus | '') {
@@ -83,6 +84,8 @@ export default function AdminAppointments() {
   }, [dateFilter, statusFilter]);
 
   useEffect(() => {
+    let isActive = true;
+
     async function loadSlots() {
       if (!activeAppointment || !rescheduleDate) {
         setAvailableSlots([]);
@@ -93,13 +96,24 @@ export default function AdminAppointments() {
         const response = await getAvailability(rescheduleDate, activeAppointment.service_id, {
           excludeAppointmentId: activeAppointment.id,
         });
+
+        if (!isActive) {
+          return;
+        }
+
         setAvailableSlots(response.slots);
       } catch {
-        setAvailableSlots([]);
+        if (isActive) {
+          setAvailableSlots([]);
+        }
       }
     }
 
     void loadSlots();
+
+    return () => {
+      isActive = false;
+    };
   }, [activeAppointment, rescheduleDate]);
 
   async function handleStatusChange(id: number, status: AppointmentStatus) {
@@ -115,8 +129,7 @@ export default function AdminAppointments() {
       const response = await fetchAppointments(dateFilter, statusFilter);
       setAppointments(response.appointments);
     } catch (updateError) {
-      const payload = updateError as { message?: string };
-      setError(payload.message ?? 'No pudimos actualizar el estado de la cita.');
+      setError(toErrorDetails(updateError, 'No pudimos actualizar el estado de la cita.').message);
     } finally {
       setPendingAction(null);
     }
@@ -137,8 +150,7 @@ export default function AdminAppointments() {
       const response = await fetchAppointments(dateFilter, statusFilter);
       setAppointments(response.appointments);
     } catch (rescheduleError) {
-      const payload = rescheduleError as { message?: string };
-      setError(payload.message ?? 'No pudimos reprogramar esa cita.');
+      setError(toErrorDetails(rescheduleError, 'No pudimos reprogramar esa cita.').message);
     } finally {
       setPendingAction(null);
     }

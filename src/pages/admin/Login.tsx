@@ -3,6 +3,7 @@ import { ArrowLeft, LockKeyhole, ShieldCheck } from 'lucide-react';
 import Seo from '../../components/Seo';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { adminLogin } from '../../lib/api';
+import { toErrorDetails } from '../../lib/errors';
 
 export default function AdminLogin() {
   const navigate = useNavigate();
@@ -22,8 +23,7 @@ export default function AdminLogin() {
       const nextPath = (location.state as { from?: string } | null)?.from ?? '/admin/dashboard';
       navigate(nextPath, { replace: true });
     } catch (loginError) {
-      const payload = loginError as { message?: string };
-      setError(payload.message ?? 'No pudimos iniciar sesión.');
+      setError(toErrorDetails(loginError, 'No pudimos iniciar sesión.').message);
     } finally {
       setIsSubmitting(false);
     }
